@@ -1,310 +1,412 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>32-bit ¤G¶i¦ì/¤Q¤»¶i¦ì´«ºâ¾¹ (°ª¬Û®eª©)</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .converter-container {
-            background-color: #e8ecf1;
-            border: 1px solid #b0c4de;
-            padding: 20px;
-            display: inline-block;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-        }
-        .grid-container {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-            background: white;
-            border-left: 1px solid #888;
-            border-top: 1px solid #888;
-        }
-        .row { display: flex; }
-        .cell {
-            width: 26px;
-            height: 28px;
-            border-right: 1px solid #888;
-            border-bottom: 1px solid #888;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        .header-row .cell {
-            font-size: 12px;
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .color-row .cell { height: 16px; }
-        .c-yellow { background-color: #ffff00; }
-        .c-blue { background-color: #0000ff; }
-        .c-green { background-color: #008000; }
-        .c-red { background-color: #ff0000; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16é€²ä½ / 2é€²ä½ / 10é€²ä½ è½‰æ›å™¨</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --line: #cfd6dd;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --bit-on: #2563eb;
+      --bit-off: #e5e7eb;
+      --bit-on-text: #ffffff;
+      --bit-off-text: #111827;
+      --nibble-a: #fff7cc;
+      --nibble-b: #eaf2ff;
+      --accent: #0f766e;
+      --error: #b91c1c;
+    }
 
-        .bit-row .cell {
-            cursor: pointer;
-            background-color: #fff;
-            user-select: none;
-        }
-        .bit-row .cell:hover { background-color: #e0e0e0; }
-        .bit-row .cell.active {
-            background-color: #0078d7;
-            color: white;
-            font-weight: bold;
-        }
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .controls label { font-weight: bold; }
-        .controls input[type="text"] {
-            padding: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        
-        .range-section {
-            margin-top: 25px;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        .range-section h3 {
-            margin-top: 0;
-            font-size: 16px;
-            color: #0056b3;
-            margin-bottom: 15px;
-        }
-        .range-section input[type="number"] {
-            width: 50px;
-            padding: 5px;
-            font-family: monospace;
-            text-align: center;
-        }
-        .range-result {
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .range-result input[type="text"] {
-            width: 280px;
-            background-color: #f9f9f9;
-            border: 1px solid #aaa;
-            padding: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            letter-spacing: 1px;
-            color: #d93025;
-            font-weight: bold;
-        }
-    </style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .bit-table {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      margin-bottom: 18px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 1020px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      text-align: center;
+      padding: 0;
+      height: 44px;
+    }
+
+    th.label, td.label {
+      min-width: 90px;
+      padding: 0 10px;
+      font-weight: 600;
+      background: #f9fafb;
+    }
+
+    th.bit-index {
+      min-width: 28px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .group-a { background: var(--nibble-a); }
+    .group-b { background: var(--nibble-b); }
+
+    .bit-btn {
+      width: 100%;
+      height: 44px;
+      border: 0;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: transform 0.04s ease, filter 0.15s ease;
+    }
+
+    .bit-btn:hover { filter: brightness(0.98); }
+    .bit-btn:active { transform: scale(0.98); }
+
+    .bit-btn.on {
+      background: var(--bit-on);
+      color: var(--bit-on-text);
+    }
+
+    .bit-btn.off {
+      background: var(--bit-off);
+      color: var(--bit-off-text);
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.18);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn:hover { background: #f8fafc; }
+
+    .range-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fcfcfd;
+    }
+
+    .range-grid {
+      display: grid;
+      grid-template-columns: 120px 120px 1fr;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .range-result {
+      padding: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: #fff;
+      line-height: 1.8;
+      word-break: break-all;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .error {
+      color: var(--error);
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .fields { grid-template-columns: 1fr; }
+      .range-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>16é€²ä½ / 2é€²ä½ / 10é€²ä½ è½‰æ›å™¨</h1>
+      <div class="sub">
+        é»é¸ bit çš„ 0 / 1 å¯ç›´æ¥åˆ‡æ›è©²ä½å…ƒï¼Œä¸¦åŒæ­¥æ›´æ–° 16 é€²ä½èˆ‡ 10 é€²ä½æ•¸å€¼ã€‚ä¸‹æ–¹ä¹Ÿå¯è¼¸å…¥ bit A åˆ° bit B çš„ç¯„åœï¼Œæ“·å–è©²æ®µäºŒé€²ä½å€¼ï¼ˆå« A èˆ‡ Bï¼‰ã€‚
+      </div>
 
-<div class="converter-container">
-    <div style="display: flex; align-items: center; margin-bottom: 5px;">
-        <span style="margin-right: 10px; font-family: monospace; font-weight: bold;">base2</span>
-        <div id="bit-grid" class="grid-container">
-            </div>
-    </div>
+      <div class="bit-table">
+        <table>
+          <tr id="indexRow">
+            <th class="label">bit</th>
+          </tr>
+          <tr id="bitRow">
+            <td class="label">value</td>
+          </tr>
+        </table>
+      </div>
 
-    <div class="controls">
-        <label>base:10 
-            <input type="text" id="base10" value="0">
-        </label>
-        <span style="font-family: monospace;">(d)</span>
-        
-        <label>base:16 
-            <input type="text" id="base16" value="0x00000000">
-        </label>
-        <span style="font-family: monospace;">(h)</span>
-    </div>
-
-    <div class="range-section">
-        <h3>{U+0001F50D} Â^¨ú¯S©w°Ï¶¡ªº¤G¶i¦ì­È (Bit A ~ Bit B)</h3>
-        <div>
-            <label>Bit A (°_©l¦ì): <input type="number" id="bitA" min="0" max="31" value="0"></label>
-            <span style="margin: 0 15px;">~</span>
-            <label>Bit B (µ²§ô¦ì): <input type="number" id="bitB" min="0" max="31" value="5"></label>
-            <span style="font-size: 12px; color: #666; margin-left: 10px;">(¤ä´© B>A ©Î A>B)</span>
+      <div class="fields">
+        <div class="field">
+          <label for="hexInput">base16</label>
+          <input id="hexInput" type="text" value="0x0000A3C1" />
         </div>
-        <div class="range-result">
-            <label>°Ï¶¡¤G¶i¦ì: 
-                <input type="text" id="rangeResult" readonly>
-            </label>
-            <label>¹ïÀ³¤Q¶i¦ì: 
-                <span id="rangeDecResult" style="font-weight:bold; color: #0078d7; font-size: 18px;">0</span>
-            </label>
+        <div class="field">
+          <label for="decInput">base10</label>
+          <input id="decInput" type="text" value="41921" />
         </div>
+        <div class="field">
+          <label for="binInput">base2</label>
+          <input id="binInput" type="text" readonly />
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn" id="setZeroBtn">å…¨éƒ¨æ¸…æˆ 0</button>
+        <button class="btn" id="setOneBtn">å…¨éƒ¨è¨­æˆ 1</button>
+        <button class="btn" id="invertBtn">å…¨éƒ¨åç›¸</button>
+      </div>
+
+      <div class="range-box">
+        <h2 style="margin:0 0 12px; font-size:20px;">æ“·å– bit A ~ bit B</h2>
+        <div class="range-grid">
+          <div class="field">
+            <label for="bitA">bit Aï¼ˆä½ä½ï¼‰</label>
+            <input id="bitA" type="number" min="0" max="31" value="0" />
+          </div>
+          <div class="field">
+            <label for="bitB">bit Bï¼ˆé«˜ä½ï¼‰</label>
+            <input id="bitB" type="number" min="0" max="31" value="7" />
+          </div>
+          <button class="btn" id="rangeBtn" style="height:44px;">å–å¾—ç¯„åœå€¼</button>
+        </div>
+        <div id="rangeResult" class="range-result"></div>
+        <div class="hint">é™åˆ¶ï¼š0 â‰¤ A &lt; B â‰¤ 31ï¼Œè¼¸å‡ºç‚ºå¾ bit B åˆ° bit A çš„äºŒé€²ä½å­—ä¸²ã€‚</div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    var NUM_BITS = 32;
-    var bits = [];
-    for (var i = 0; i < NUM_BITS; i++) {
-        bits.push(0);
+  <script>
+    const BIT_WIDTH = 32;
+    let value = 0x0000A3C1 >>> 0;
+
+    const indexRow = document.getElementById('indexRow');
+    const bitRow = document.getElementById('bitRow');
+    const hexInput = document.getElementById('hexInput');
+    const decInput = document.getElementById('decInput');
+    const binInput = document.getElementById('binInput');
+    const bitAInput = document.getElementById('bitA');
+    const bitBInput = document.getElementById('bitB');
+    const rangeResult = document.getElementById('rangeResult');
+
+    function nibbleClass(bitIndex) {
+      return Math.floor((31 - bitIndex) / 4) % 2 === 0 ? 'group-a' : 'group-b';
     }
 
-    function initGrid() {
-        var grid = document.getElementById('bit-grid');
-        var headerRow = document.createElement('div');
-        headerRow.className = 'row header-row';
-        var colorRow = document.createElement('div');
-        colorRow.className = 'row color-row';
-        var bitRow = document.createElement('div');
-        bitRow.className = 'row bit-row';
+    function buildTable() {
+      for (let i = BIT_WIDTH - 1; i >= 0; i--) {
+        const th = document.createElement('th');
+        th.className = `bit-index ${nibbleClass(i)}`;
+        th.textContent = i;
+        indexRow.appendChild(th);
 
-        for (var i = NUM_BITS - 1; i >= 0; i--) {
-            var hCell = document.createElement('div');
-            hCell.className = 'cell';
-            hCell.textContent = i;
-            headerRow.appendChild(hCell);
-
-            var cCell = document.createElement('div');
-            cCell.className = 'cell';
-            if (i >= 24) cCell.className += ' c-yellow';
-            else if (i >= 16) cCell.className += ' c-blue';
-            else if (i >= 12) cCell.className += ' c-green';
-            else if (i >= 8) cCell.className += ' c-red';
-            else if (i >= 4) cCell.className += ' c-green';
-            else cCell.className += ' c-red';
-            colorRow.appendChild(cCell);
-
-            var bCell = document.createElement('div');
-            bCell.className = 'cell';
-            bCell.id = 'bit-' + i;
-            bCell.textContent = '0';
-            
-            // ¨Ï¥Î³¬¥]¸j©wÂIÀ»¨Æ¥ó
-            (function(index) {
-                bCell.onclick = function() { toggleBit(index); };
-            })(i);
-
-            bitRow.appendChild(bCell);
-        }
-
-        grid.appendChild(headerRow);
-        grid.appendChild(colorRow);
-        grid.appendChild(bitRow);
+        const td = document.createElement('td');
+        td.className = nibbleClass(i);
+        const btn = document.createElement('button');
+        btn.className = 'bit-btn';
+        btn.dataset.bit = i;
+        btn.addEventListener('click', () => toggleBit(i));
+        td.appendChild(btn);
+        bitRow.appendChild(td);
+      }
     }
 
-    function toggleBit(index) {
-        bits[index] = bits[index] === 0 ? 1 : 0;
-        var bCell = document.getElementById('bit-' + index);
-        bCell.textContent = bits[index];
-        if (bits[index] === 1) {
-            bCell.className = 'cell active';
-        } else {
-            bCell.className = 'cell';
-        }
-        updateValues();
+    function toBinaryString(v) {
+      return (v >>> 0).toString(2).padStart(BIT_WIDTH, '0');
     }
 
-    function updateValues() {
-        var decimalValue = 0;
-        for (var i = 0; i < NUM_BITS; i++) {
-            if (bits[i] === 1) {
-                decimalValue += Math.pow(2, i);
-            }
-        }
+    function toHexString(v) {
+      return '0x' + (v >>> 0).toString(16).toUpperCase().padStart(8, '0');
+    }
 
-        document.getElementById('base10').value = decimalValue.toString();
+    function updateDisplay() {
+      for (const btn of document.querySelectorAll('.bit-btn')) {
+        const bit = Number(btn.dataset.bit);
+        const bitValue = (value >>> bit) & 1;
+        btn.textContent = bitValue;
+        btn.classList.toggle('on', bitValue === 1);
+        btn.classList.toggle('off', bitValue === 0);
+      }
 
-        var hexString = decimalValue.toString(16).toUpperCase();
-        while (hexString.length < 8) {
-            hexString = '0' + hexString;
-        }
-        document.getElementById('base16').value = '0x' + hexString;
+      hexInput.value = toHexString(value);
+      decInput.value = String(value >>> 0);
+      binInput.value = toBinaryString(value);
+      updateRange();
+    }
 
-        updateRange();
+    function toggleBit(bit) {
+      value = (value ^ (1 << bit)) >>> 0;
+      updateDisplay();
+    }
+
+    function setFromHex() {
+      let raw = hexInput.value.trim();
+      raw = raw.replace(/^0x/i, '');
+      if (!/^[0-9a-fA-F]{1,8}$/.test(raw)) {
+        alert('è«‹è¼¸å…¥ 1~8 ä½æœ‰æ•ˆçš„ 16 é€²ä½æ•¸å­—ã€‚');
+        hexInput.value = toHexString(value);
+        return;
+      }
+      value = parseInt(raw, 16) >>> 0;
+      updateDisplay();
+    }
+
+    function setFromDec() {
+      const raw = decInput.value.trim();
+      if (!/^\d+$/.test(raw)) {
+        alert('è«‹è¼¸å…¥ 0 ~ 4294967295 çš„ 10 é€²ä½æ•´æ•¸ã€‚');
+        decInput.value = String(value >>> 0);
+        return;
+      }
+      const big = BigInt(raw);
+      if (big < 0n || big > 4294967295n) {
+        alert('10 é€²ä½ç¯„åœéœ€ä»‹æ–¼ 0 ~ 4294967295ã€‚');
+        decInput.value = String(value >>> 0);
+        return;
+      }
+      value = Number(big) >>> 0;
+      updateDisplay();
     }
 
     function updateRange() {
-        var valA = parseInt(document.getElementById('bitA').value, 10);
-        var valB = parseInt(document.getElementById('bitB').value, 10);
+      const a = Number(bitAInput.value);
+      const b = Number(bitBInput.value);
 
-        if (isNaN(valA) || isNaN(valB)) return;
+      if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b > 31 || b <= a) {
+        rangeResult.innerHTML = '<span class="error">è«‹è¼¸å…¥æœ‰æ•ˆç¯„åœï¼š0 â‰¤ A &lt; B â‰¤ 31</span>';
+        return;
+      }
 
-        var minBit = Math.max(0, Math.min(valA, valB));
-        var maxBit = Math.min(31, Math.max(valA, valB));
+      const width = b - a + 1;
+      const mask = width === 32 ? 0xFFFFFFFF : ((2 ** width) - 1);
+      const sliced = (value >>> a) & mask;
+      const bin = sliced.toString(2).padStart(width, '0');
+      const hexDigits = Math.ceil(width / 4);
+      const hex = '0x' + sliced.toString(16).toUpperCase().padStart(hexDigits, '0');
 
-        var extractedBinaryStr = "";
-        var extractedDecimal = 0;
-
-        for (var i = maxBit; i >= minBit; i--) {
-            extractedBinaryStr += bits[i].toString();
-        }
-
-        for (var j = minBit; j <= maxBit; j++) {
-            if (bits[j] === 1) {
-                extractedDecimal += Math.pow(2, j - minBit);
-            }
-        }
-
-        document.getElementById('rangeResult').value = extractedBinaryStr;
-        document.getElementById('rangeDecResult').textContent = extractedDecimal.toString();
+      rangeResult.innerHTML = `
+        <div>ç¯„åœï¼šbit ${b} ~ bit ${a}</div>
+        <div>binaryï¼š${bin}</div>
+        <div>decimalï¼š${sliced}</div>
+        <div>hexï¼š${hex}</div>
+      `;
     }
 
-    function setBitsFromNumber(val) {
-        var temp = val;
-        for (var i = 0; i < NUM_BITS; i++) {
-            var bitVal = temp % 2;
-            bits[i] = bitVal;
-            temp = Math.floor(temp / 2);
-
-            var bCell = document.getElementById('bit-' + i);
-            if (bCell) {
-                bCell.textContent = bits[i];
-                if (bits[i] === 1) {
-                    bCell.className = 'cell active';
-                } else {
-                    bCell.className = 'cell';
-                }
-            }
-        }
-    }
-
-    // ºÊÅ¥¤å¦r¿é¤J®Ø§ïÅÜ («ö Enter ©ÎÂIÀ»®ÇÃä®ÉÄ²µo)
-    document.getElementById('base10').addEventListener('change', function(e) {
-        var val = parseInt(e.target.value, 10);
-        if (!isNaN(val) && val >= 0) {
-            setBitsFromNumber(val);
-            updateValues();
-        }
+    document.getElementById('setZeroBtn').addEventListener('click', () => {
+      value = 0;
+      updateDisplay();
     });
 
-    document.getElementById('base16').addEventListener('change', function(e) {
-        var valStr = e.target.value.replace(/^0x/i, '');
-        var val = parseInt(valStr, 16);
-        if (!isNaN(val) && val >= 0) {
-            setBitsFromNumber(val);
-            updateValues();
-        }
+    document.getElementById('setOneBtn').addEventListener('click', () => {
+      value = 0xFFFFFFFF >>> 0;
+      updateDisplay();
     });
 
-    document.getElementById('bitA').addEventListener('input', updateRange);
-    document.getElementById('bitB').addEventListener('input', updateRange);
+    document.getElementById('invertBtn').addEventListener('click', () => {
+      value = (~value) >>> 0;
+      updateDisplay();
+    });
 
-    // ±Ò°Êµ{¦¡
-    initGrid();
-    updateValues();
-</script>
+    hexInput.addEventListener('change', setFromHex);
+    decInput.addEventListener('change', setFromDec);
+    bitAInput.addEventListener('input', updateRange);
+    bitBInput.addEventListener('input', updateRange);
+    document.getElementById('rangeBtn').addEventListener('click', updateRange);
+
+    buildTable();
+    updateDisplay();
+  </script>
 </body>
 </html>
