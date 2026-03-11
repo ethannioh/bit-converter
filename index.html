@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>32-bit 二進位/十六進位換算器 (高相容版)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .converter-container {
+            background-color: #e8ecf1;
+            border: 1px solid #b0c4de;
+            padding: 20px;
+            display: inline-block;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            background: white;
+            border-left: 1px solid #888;
+            border-top: 1px solid #888;
+        }
+        .row { display: flex; }
+        .cell {
+            width: 26px;
+            height: 28px;
+            border-right: 1px solid #888;
+            border-bottom: 1px solid #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .header-row .cell {
+            font-size: 12px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .color-row .cell { height: 16px; }
+        .c-yellow { background-color: #ffff00; }
+        .c-blue { background-color: #0000ff; }
+        .c-green { background-color: #008000; }
+        .c-red { background-color: #ff0000; }
+
+        .bit-row .cell {
+            cursor: pointer;
+            background-color: #fff;
+            user-select: none;
+        }
+        .bit-row .cell:hover { background-color: #e0e0e0; }
+        .bit-row .cell.active {
+            background-color: #0078d7;
+            color: white;
+            font-weight: bold;
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .controls label { font-weight: bold; }
+        .controls input[type="text"] {
+            padding: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .range-section {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .range-section h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+        .range-section input[type="number"] {
+            width: 50px;
+            padding: 5px;
+            font-family: monospace;
+            text-align: center;
+        }
+        .range-result {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .range-result input[type="text"] {
+            width: 280px;
+            background-color: #f9f9f9;
+            border: 1px solid #aaa;
+            padding: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            letter-spacing: 1px;
+            color: #d93025;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="converter-container">
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <span style="margin-right: 10px; font-family: monospace; font-weight: bold;">base2</span>
+        <div id="bit-grid" class="grid-container">
+            </div>
+    </div>
+
+    <div class="controls">
+        <label>base:10 
+            <input type="text" id="base10" value="0">
+        </label>
+        <span style="font-family: monospace;">(d)</span>
+        
+        <label>base:16 
+            <input type="text" id="base16" value="0x00000000">
+        </label>
+        <span style="font-family: monospace;">(h)</span>
+    </div>
+
+    <div class="range-section">
+        <h3>{U+0001F50D} 擷取特定區間的二進位值 (Bit A ~ Bit B)</h3>
+        <div>
+            <label>Bit A (起始位): <input type="number" id="bitA" min="0" max="31" value="0"></label>
+            <span style="margin: 0 15px;">~</span>
+            <label>Bit B (結束位): <input type="number" id="bitB" min="0" max="31" value="5"></label>
+            <span style="font-size: 12px; color: #666; margin-left: 10px;">(支援 B>A 或 A>B)</span>
+        </div>
+        <div class="range-result">
+            <label>區間二進位: 
+                <input type="text" id="rangeResult" readonly>
+            </label>
+            <label>對應十進位: 
+                <span id="rangeDecResult" style="font-weight:bold; color: #0078d7; font-size: 18px;">0</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+    var NUM_BITS = 32;
+    var bits = [];
+    for (var i = 0; i < NUM_BITS; i++) {
+        bits.push(0);
+    }
+
+    function initGrid() {
+        var grid = document.getElementById('bit-grid');
+        var headerRow = document.createElement('div');
+        headerRow.className = 'row header-row';
+        var colorRow = document.createElement('div');
+        colorRow.className = 'row color-row';
+        var bitRow = document.createElement('div');
+        bitRow.className = 'row bit-row';
+
+        for (var i = NUM_BITS - 1; i >= 0; i--) {
+            var hCell = document.createElement('div');
+            hCell.className = 'cell';
+            hCell.textContent = i;
+            headerRow.appendChild(hCell);
+
+            var cCell = document.createElement('div');
+            cCell.className = 'cell';
+            if (i >= 24) cCell.className += ' c-yellow';
+            else if (i >= 16) cCell.className += ' c-blue';
+            else if (i >= 12) cCell.className += ' c-green';
+            else if (i >= 8) cCell.className += ' c-red';
+            else if (i >= 4) cCell.className += ' c-green';
+            else cCell.className += ' c-red';
+            colorRow.appendChild(cCell);
+
+            var bCell = document.createElement('div');
+            bCell.className = 'cell';
+            bCell.id = 'bit-' + i;
+            bCell.textContent = '0';
+            
+            // 使用閉包綁定點擊事件
+            (function(index) {
+                bCell.onclick = function() { toggleBit(index); };
+            })(i);
+
+            bitRow.appendChild(bCell);
+        }
+
+        grid.appendChild(headerRow);
+        grid.appendChild(colorRow);
+        grid.appendChild(bitRow);
+    }
+
+    function toggleBit(index) {
+        bits[index] = bits[index] === 0 ? 1 : 0;
+        var bCell = document.getElementById('bit-' + index);
+        bCell.textContent = bits[index];
+        if (bits[index] === 1) {
+            bCell.className = 'cell active';
+        } else {
+            bCell.className = 'cell';
+        }
+        updateValues();
+    }
+
+    function updateValues() {
+        var decimalValue = 0;
+        for (var i = 0; i < NUM_BITS; i++) {
+            if (bits[i] === 1) {
+                decimalValue += Math.pow(2, i);
+            }
+        }
+
+        document.getElementById('base10').value = decimalValue.toString();
+
+        var hexString = decimalValue.toString(16).toUpperCase();
+        while (hexString.length < 8) {
+            hexString = '0' + hexString;
+        }
+        document.getElementById('base16').value = '0x' + hexString;
+
+        updateRange();
+    }
+
+    function updateRange() {
+        var valA = parseInt(document.getElementById('bitA').value, 10);
+        var valB = parseInt(document.getElementById('bitB').value, 10);
+
+        if (isNaN(valA) || isNaN(valB)) return;
+
+        var minBit = Math.max(0, Math.min(valA, valB));
+        var maxBit = Math.min(31, Math.max(valA, valB));
+
+        var extractedBinaryStr = "";
+        var extractedDecimal = 0;
+
+        for (var i = maxBit; i >= minBit; i--) {
+            extractedBinaryStr += bits[i].toString();
+        }
+
+        for (var j = minBit; j <= maxBit; j++) {
+            if (bits[j] === 1) {
+                extractedDecimal += Math.pow(2, j - minBit);
+            }
+        }
+
+        document.getElementById('rangeResult').value = extractedBinaryStr;
+        document.getElementById('rangeDecResult').textContent = extractedDecimal.toString();
+    }
+
+    function setBitsFromNumber(val) {
+        var temp = val;
+        for (var i = 0; i < NUM_BITS; i++) {
+            var bitVal = temp % 2;
+            bits[i] = bitVal;
+            temp = Math.floor(temp / 2);
+
+            var bCell = document.getElementById('bit-' + i);
+            if (bCell) {
+                bCell.textContent = bits[i];
+                if (bits[i] === 1) {
+                    bCell.className = 'cell active';
+                } else {
+                    bCell.className = 'cell';
+                }
+            }
+        }
+    }
+
+    // 監聽文字輸入框改變 (按 Enter 或點擊旁邊時觸發)
+    document.getElementById('base10').addEventListener('change', function(e) {
+        var val = parseInt(e.target.value, 10);
+        if (!isNaN(val) && val >= 0) {
+            setBitsFromNumber(val);
+            updateValues();
+        }
+    });
+
+    document.getElementById('base16').addEventListener('change', function(e) {
+        var valStr = e.target.value.replace(/^0x/i, '');
+        var val = parseInt(valStr, 16);
+        if (!isNaN(val) && val >= 0) {
+            setBitsFromNumber(val);
+            updateValues();
+        }
+    });
+
+    document.getElementById('bitA').addEventListener('input', updateRange);
+    document.getElementById('bitB').addEventListener('input', updateRange);
+
+    // 啟動程式
+    initGrid();
+    updateValues();
+</script>
+</body>
+</html>
